@@ -1,0 +1,121 @@
+Step 1:
+
+
+app = Flask(__name__)
+@app.route('/')
+def index():
+    return render_teplate('index.html')
+
+if __name__ == '__main__':
+    app.run()
+
+
+
+Step 2:
+
+
+
+from flask import Flask, jsonify, request, render_template
+
+from flask_wtf import FlaskForm
+from wtforms import IntegerField
+
+import numpy as np
+import pandas as pd
+from sklearn.naive_bayes import GaussianNB
+import joblib
+
+
+
+step 3:
+
+
+
+app = Flask(__name__)
+
+app.config['SECRET_KEY'] = 'asdfasdfasdfasdfas'
+# Create a class for Test the data
+class FlaseAlarm(FlaskForm):
+    ambient_temperature = IntegerField("Ambient Temperature")
+    calibration = IntegerField("Calibration")
+    unwanted_substance = IntegerField("Unwanted Substance")
+    humidity = IntegerField("Humidity")
+    h2s = IntegerField("H2S")
+    detected_by = IntegerField("Detected By")
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/train')
+def train():
+    file_name = 'False Alarm Cases.xlsx'
+    df_train = pd.read_excel(file_name)
+    df_train = df_train.iloc[:,1:8]
+    x = df_train.iloc[:,0:6]
+    y = df_train['Spuriosity Index(0/1)']
+    ml_model = GaussianNB()
+    ml_file = 'ml_model.pkl'
+    ml_model.fit(x,y)
+    joblib.dump(ml_model, ml_file)
+    return render_template('train.html', name=ml_file)
+
+
+
+step 4:
+
+
+
+@app.route('/test', methods=['GET', 'POST'])
+def test():
+    form = FlaseAlarm()
+    if request.method == 'POST':
+        ml_file = 'ml_model.pkl'
+        clf = joblib.load(ml_file)
+        a = form.data['ambient_temperature']
+        b = form.data['calibration']
+        c = form.data['unwanted_substance']
+        d = form.data['humidity']
+        e = form.data['h2s']
+        f = form.data['detected_by']
+        
+        input_values = [a,b,c,d,e,f]
+        input_array = np.array(input_values)
+        input_array = input_array.reshape(1,6)
+        df_test = pd.DataFrame(input_array, columns=["Ambient Temperature", "Calibration","Unwanted Substance","Humidity","H2S","Detected By"])
+        y_pred = clf.predict(input_array)
+        result = "No Danger"
+        if y_pred == 1:
+            result = 'Danger'
+        return "Prediction is %s"%(result)
+    else:
+        return render_template('test.html', form = form)
+
+@app.route('/predict')
+def predict():
+    return render_template('predict.html')
+
+@app.route('/report')
+def report():
+    return render_template('report.html')
+
+@app.route('/help')
+def help():
+    return render_template('help.html')
+
+if __name__ == '__main__':
+    app.run()
+
+
+
+Step 5:
+
+
+file_name = 'False Alarm Cases.xlsx'
+df_train = pd.read_excel(file_name)
+
+df_train.head()
+df = df_train.iloc[:,1:8]
+df.iloc[:,0:6]
+
+
